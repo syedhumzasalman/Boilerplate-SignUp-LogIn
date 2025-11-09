@@ -1,6 +1,6 @@
 import express from "express"
 import { authMiddleware } from "../Middleware/auth.js"
-import { loginController, signupController } from "../Controller/auth.js"
+import { loginController, signupController, verifyOtpController } from "../Controller/auth.js"
 
 
 const authRoute = express.Router()
@@ -9,6 +9,9 @@ const authRoute = express.Router()
 authRoute.post("/signup", signupController)
 
 authRoute.post("/login", loginController)
+
+
+authRoute.post("/verify-otp", verifyOtpController)
 
 
 

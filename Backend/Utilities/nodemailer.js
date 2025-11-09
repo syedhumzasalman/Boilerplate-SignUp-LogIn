@@ -1,17 +1,16 @@
 import nodemailer from "nodemailer"
 import { emailTemplate } from "./emilTemp.js";
-import { v4 as uuidv4 } from 'uuid';
 
 
 
-export const sentEmail = async ({ email, name }) => {
+export const sentEmail = async ({ email, name, otp }) => {
     try {
 
         // console.log("email", process.env.EMAIL);
         // console.log("APP_PASS", process.env.APP_PASS);
         // console.log("email", email);
 
-        const otp = uuidv4().slice(0, 6)
+
 
         const transporter = nodemailer.createTransport({
             service: "Gmail",

@@ -2,15 +2,23 @@ import userModel from "../Models/userSchema.js"
 import bcrypt from "bcryptjs"
 import jwt from "jsonwebtoken"
 import { sentEmail } from "../Utilities/nodemailer.js"
+import { v4 as uuidv4 } from 'uuid';
+import OTPModel from "../Models/otpschema.js";
+
 
 
 
 export const signupController = async (request, response) => {
     try {
+        // Extract body form request ****
         const body = request.body
+        // Generate OPT from UUID ****
+        const otp = uuidv4().slice(0, 6)
 
+        // Checking if email email already Exist ****
         const emailExist = await userModel.findOne({ email: body.email })
 
+        // if email already Exist Return **** 
         if (emailExist) {
             return response.json({
                 message: "Email Address Already Exist",
@@ -19,8 +27,10 @@ export const signupController = async (request, response) => {
             })
         }
 
+        // Extract password from body ****
         const userPassword = body.password
 
+        // if password length is less than 6 word Return ****
         if (userPassword.length < 6) {
             return response.json({
                 message: "Password must be at least 6 characters long",
@@ -29,19 +39,33 @@ export const signupController = async (request, response) => {
             })
         }
 
+        // Hashpassword using bcrypt ****
         const hashPassword = await bcrypt.hash(userPassword, 10)
+        // putting the hashed password into my object ****
         const obj = { ...body, password: hashPassword }
 
+        // creating a user collection in MongoDB ****
         const userResponse = await userModel.create(obj)
         // console.log('userResponse', userResponse);
 
 
-        // sent verification email
-        sentEmail({ email: body.email, name: body.firstName })
+        // sent verification email ****
+        sentEmail({ email: body.email, name: body.firstName, otp: otp })
+        // console.log(otp);
 
 
+        // create otpObj to store in database ****
+        const otpObj = {
+            otp,
+            email: body.email
+        }
+
+        // creating a otp collection in MongoDB ****
+        await OTPModel.create(otpObj)
+
+        // if all good user created Successfully ****
         response.json({
-            message: "User Created",
+            message: "User Created Successfully",
             status: true,
         })
 
@@ -67,15 +91,7 @@ export const loginController = async (request, response) => {
         // console.log('findUser', findUser);
         if (!findUser) {
             response.json({
-                message: "User Not Found email or password invalid email",
-                status: false,
-                data: null
-            })
-        }
-
-        if (findUser.isVerify == false) {
-            return response.json({
-                message: "Please Verify your email first",
+                message: "User Not Found email or password invalid",
                 status: false,
                 data: null
             })
@@ -87,7 +103,15 @@ export const loginController = async (request, response) => {
 
         if (!matchPass) {
             response.json({
-                message: "User Not Found email or password invalid password",
+                message: "User Not Found email or password invalid",
+                status: false,
+                data: null
+            })
+        }
+
+        if (findUser.isVerify == false) {
+            return response.json({
+                message: "Please Verify your email first",
                 status: false,
                 data: null
             })
@@ -130,4 +154,53 @@ export const loginController = async (request, response) => {
         })
     }
 
+}
+
+
+
+
+export const verifyOtpController = async (request, response) => {
+    try {
+
+        const { email, otp } = request.body
+
+        if (!email || !otp) {
+            return response.json({
+                message: "Required Field are missing",
+                status: false,
+                data: null
+            })
+        }
+
+        const isExist = await OTPModel.findOne({ email, isUsed: false, otp })
+
+        // console.log("isExist", isExist);
+
+        if (!isExist) {
+            return response.json({
+                message: "Expire or Already Used",
+                status: false,
+                data: null
+            })
+        }
+
+        await OTPModel.findByIdAndUpdate(isExist._id, { isUsed: true })
+        await userModel.findOneAndUpdate({ email }, { isVerify: true })
+
+
+        response.json({
+            message: "OTP Verify Successfully",
+            status: true,
+            data: null
+        })
+
+
+    } catch (error) {
+        const firstError = error?.errors ? Object.values(error.errors)[0].message : error.message;
+        response.json({
+            message: firstError || "Some thing went Wrong",
+            status: false,
+            data: null
+        })
+    }
 }

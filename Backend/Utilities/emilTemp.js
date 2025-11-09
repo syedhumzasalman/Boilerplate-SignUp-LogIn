@@ -144,7 +144,7 @@ export const emailTemplate = ({ otp, name }) => {
     <div class="email-container">
         <!-- Content -->
         <div class="content">
-            <p class="greeting">Hello! ${name} 👋</p>
+            <p class="greeting">Hello! ${name} Welcome 👋</p>
             
             <p class="message">
                 Use the verification code below to complete your registration:
