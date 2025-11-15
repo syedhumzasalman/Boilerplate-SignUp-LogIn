@@ -98,6 +98,14 @@ export const loginController = async (request, response) => {
         }
 
 
+        if (findUser.isVerify == false) {
+            return response.json({
+                message: "Please Verify your Account first",
+                status: false,
+                data: null
+            })
+        }
+
         const matchPass = await bcrypt.compare(password, findUser.password)
         // console.log("matchPass" , matchPass);
 
@@ -109,13 +117,7 @@ export const loginController = async (request, response) => {
             })
         }
 
-        if (findUser.isVerify == false) {
-            return response.json({
-                message: "Please Verify your email first",
-                status: false,
-                data: null
-            })
-        }
+
 
         // console.log(findUser);
 
@@ -172,13 +174,22 @@ export const verifyOtpController = async (request, response) => {
             })
         }
 
-        const isExist = await OTPModel.findOne({ email, isUsed: false, otp })
+        const isExist = await OTPModel.findOne({ email, isUsed: false }).sort({ createdAt: -1 })
 
         // console.log("isExist", isExist);
 
+
         if (!isExist) {
             return response.json({
-                message: "Expire or Already Used",
+                message: "Invalid OTP",
+                status: false,
+                data: null
+            })
+        }
+
+        if (isExist.otp !== otp) {
+            return response.json({
+                message: "Invalid OTP",
                 status: false,
                 data: null
             })
@@ -190,6 +201,69 @@ export const verifyOtpController = async (request, response) => {
 
         response.json({
             message: "OTP Verify Successfully",
+            status: true,
+            data: null
+        })
+
+
+    } catch (error) {
+        const firstError = error?.errors ? Object.values(error.errors)[0].message : error.message;
+        response.json({
+            message: firstError || "Some thing went Wrong",
+            status: false,
+            data: null
+        })
+    }
+}
+
+
+
+export const resetOtpController = async (request, response) => {
+    try {
+
+        const { email } = request.body
+
+        if (!email) {
+            return response.json({
+                message: "Required Field are missing",
+                status: false,
+                data: null
+            })
+        }
+
+        const findUser = await userModel.findOne({ email })
+        // console.log('findUser', findUser);
+        if (!findUser) {
+            response.json({
+                message: "User Not Found",
+                status: false,
+                data: null
+            })
+        }
+        // console.log("findUser", findUser);
+
+
+        // Generate OPT from UUID ****
+        const otp = uuidv4().slice(0, 6)
+        // console.log(otp);
+
+
+        // sent verification email ****
+        sentEmail({ email: findUser.email, name: findUser.firstName, otp: otp })
+
+        // create otpObj to store in database ****
+        const otpObj = {
+            otp,
+            email: findUser.email
+        }
+
+        // creating a otp collection in MongoDB ****
+        await OTPModel.create(otpObj)
+
+
+
+        response.json({
+            message: "Sent OTP Please check you email",
             status: true,
             data: null
         })

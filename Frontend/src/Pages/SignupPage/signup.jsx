@@ -50,12 +50,12 @@ const Signup = () => {
 
     try {
 
-      const response = await axios.post("http://localhost:3000/signup", userObj)
+      const response = await axios.post("http://localhost:3000/api/signup", userObj)
       console.log("response", response);
 
       console.log(response.data.message);
 
-      if (response.data.message == "User Created") {
+      if (response.data.message == "User Created Successfully") {
         return Swal.fire({
           icon: "success",
           title: "Account Created!",
@@ -67,7 +67,11 @@ const Signup = () => {
           setAge("")
           setEmail("")
           setPassword("")
-          navigate("/login")
+          navigate("/verifiOTP", {
+            state: {
+              email,
+            }
+          })
         });
       }
 

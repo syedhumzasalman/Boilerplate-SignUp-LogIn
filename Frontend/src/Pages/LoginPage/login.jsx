@@ -10,6 +10,7 @@ const Login = ({ setUser }) => {
   const [userPasswordLogin, setUserPasswordLogin] = useState("")
   const navigate = useNavigate();
 
+
   const loginUser = async () => {
 
     //  Validation for empty fields
@@ -38,7 +39,7 @@ const Login = ({ setUser }) => {
         password: userPasswordLogin.trim()
       }
 
-      const response = await axios.post("http://localhost:3000/login", uerObj)
+      const response = await axios.post("http://localhost:3000/api/login", uerObj)
       console.log("response", response);
 
       if (response?.data?.message == "User Successfully Login")
@@ -52,6 +53,21 @@ const Login = ({ setUser }) => {
           localStorage.setItem("token", response?.data?.token);
           navigate("/dashboard")
         });
+
+      if (response?.data?.message == "Please Verify your Account first") {
+        return Swal.fire({
+          icon: "warning",
+          title: "Verification Required",
+          text: "Please verify your account before login.",
+          confirmButtonColor: "#22c55e"
+        }).then(() => {
+          navigate("/verifiOTP", {
+            state: {
+              email: userEmailLogin,
+            }
+          });
+        })
+      }
 
       Swal.fire({
         icon: "error",

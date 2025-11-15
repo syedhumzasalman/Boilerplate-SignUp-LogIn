@@ -7,6 +7,7 @@ import Signup from "../src/Pages/SignupPage/signup"
 import Login from "../src/Pages/LoginPage/login"
 import Dashboard from "../src/Pages/Dashboard/dashboard"
 import NotFound from "../src/Pages//NotFound/NotFound"
+import OTPVerification from './Pages/OTPVerification/OTPVerification'
 
 function App() {
 
@@ -17,6 +18,7 @@ function App() {
         <Route element={<AuthRoutes />}>
           <Route path="/" element={<Signup />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/verifiOTP" element={<OTPVerification />} />
         </Route>
 
 
